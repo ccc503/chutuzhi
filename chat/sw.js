@@ -1,7 +1,7 @@
 // 离线缓存：把 App 外壳（HTML/JS/图标）全存下来，装到桌面后断网也能开
 // ⚠️ 只碰【同源 GET】—— 大模型接口是别的域名，绝不能拦、也不能缓存
 // ⚠️ 改了任何一个 index.html / *.js 都要把这个版本号 +1 —— 否则老用户永远吃缓存
-const CACHE = 'chutuzhi-chat-v4';
+const CACHE = 'chutuzhi-chat-v5';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './ref_draw.js', './data.js', './cap_rules.js', './prompts.js',
