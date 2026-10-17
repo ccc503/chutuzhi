@@ -43,8 +43,9 @@
       else if (typeof it === 'string') { cat = NAME2CAT[it] || 'M'; cn = it; }
       else continue;
       if (!(cat === 'EH' || cat === 'M') || !cn) continue;
-      // ⭐ 图上每路底下本来就会加「1.」「2.」编号 → 名字里别再带编号，否则会出现「1.1.补水泵」
-      cn = cn.replace(/^\s*\d+\s*[.、·:：]\s*/, '').trim() || cn;
+      // ⭐ 图上每路底下本来就会加「1.」「2.」编号 → 名字里别再带编号，否则会出现「1.1#补水泵」
+      //    （模型实测爱写「1#补水泵」「1.补水泵」）
+      cn = cn.replace(/^\s*\d+\s*[.、·:：#＃]\s*/, '').trim() || cn;
       loads.push([cat, cn]);
     }
 
