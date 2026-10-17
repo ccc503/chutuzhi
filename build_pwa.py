@@ -108,12 +108,15 @@ def main():
     # ⑤ sw.js 打版本号
     ver = hashlib.sha256(out.encode('utf-8')).hexdigest()[:12]
     sw = open(SW, encoding='utf-8').read()
-    sw2 = re.sub(r"chutuzhi-[0-9a-f_]+'", f"chutuzhi-{ver}'", sw)
-    if sw2 == sw and '__V__' not in sw:
-        print(f'  ⚠️ sw.js 版本号没换成（当前源码里已经是 chutuzhi-{ver}？）')
+    # ⚠️ 只换 `const VER = PREFIX + '…'` 那一处 —— 以前用 chutuzhi-[0-9a-f_]+ 全量替换，
+    #    会连注释/前缀常量一起改，加了 PREFIX 之后必须收紧
+    sw2 = re.sub(r"(const VER = PREFIX \+ ')[^']*(')", rf"\g<1>{ver}\g<2>", sw)
+    if sw2 == sw:
+        print('  ❌ sw.js 版本号没换成（源码里找不到 `const VER = PREFIX + \'…\'`）')
+        return 1
     with open(SW, 'w', encoding='utf-8', newline='') as f:
         f.write(sw2)
-    print(f'  ✅ sw.js 版本 = chutuzhi-{ver}')
+    print(f'  ✅ sw.js 版本 = chutuzhi-site-{ver}')
 
     # ⑥ 交付清单
     print('\n  pwa 目录：')
