@@ -9,7 +9,7 @@
 // ② 绝不能用全局 `caches.match(req)` —— 它按缓存创建顺序在所有缓存里找，旧版本先命中 →
 //    文件更新了用户还拿几个月前的。必须 `caches.open(自己那个).match(...)`。
 const PREFIX = 'chutuzhi-chat-';
-const CACHE = PREFIX + 'v7';
+const CACHE = PREFIX + 'v8';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './ref_draw.js', './data.js', './cap_rules.js', './prompts.js',
@@ -23,7 +23,10 @@ const LOOKUP = (req, opt) => caches.open(CACHE).then((c) => c.match(req, opt));
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => c.addAll(SHELL))
+      // ⭐⭐ `cache: 'reload'` 必须加！GitHub Pages 给 index.html 带 `Cache-Control: max-age=600`，
+      //     不加的话 addAll 会直接吃【浏览器 HTTP 缓存里那份旧的】存进新缓存 →
+      //     版本号明明变了，用户拿到的内容还是几个月前的（2026-10-17 线上真踩，v7 缓存里躺着旧页面）
+      .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
       .catch(() => self.skipWaiting())
   );
