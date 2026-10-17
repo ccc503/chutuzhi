@@ -72,7 +72,7 @@
         ${basis}${warn}
         <div class="card-ft">
           <button class="btn-s" data-act="open">看大图</button>
-          <button class="btn-s" data-act="print">存/打印</button>
+          <button class="btn-s" data-act="print">存 PDF</button>
           <button class="btn-s" data-act="fix">按这个改</button>
           <button class="btn-s btn-good" data-act="pick">就它了</button>
         </div>
@@ -222,16 +222,34 @@
   }
   function closeViewer() { $('#viewer').classList.remove('on'); viewerRec = null; }
 
-  function savePrint(rec) {
+  /* ⭐ 存 PDF：把这张图的单页 HTML 塞进隐藏 iframe，调它的 print() ——
+     浏览器打印对话框里「目标打印机」选成「另存为 PDF」，存出来就是矢量 PDF。
+     ⚠️ 不用 jsPDF / svg2pdf 这类库：SVG 转 canvas 是位图，图纸放大就糊。
+     那份 HTML 自带 @page{size:A3 landscape;margin:6mm} → 出来就是 A3 横向单页。
+     ⚠️ iframe 必须挂进 document 才能拿到完整排版上下文，否则 print() 打出来是空白。*/
+  function savePdf(rec) {
     const svg = svgOf(rec);
     const html = rec.html || (svg ? `<!doctype html><meta charset="utf-8"><title>${esc(rec.name || '出图纸')}</title>${svg}` : '');
     if (!html) { alert('图没出来'); return; }
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (rec.name || '出图纸') + '.html';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    let f = document.getElementById('pdframe');
+    if (f) f.remove();
+    f = document.createElement('iframe');
+    f.id = 'pdframe';
+    f.setAttribute('title', rec.name || '出图纸');
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:2px;height:2px;'
+                    + 'opacity:0;border:0;pointer-events:none;';
+    document.body.appendChild(f);
+    try {
+      const d = f.contentDocument || f.contentWindow.document;
+      d.open(); d.write(html); d.close();
+    } catch (e) { alert('这张图打不开：' + e); return; }
+    // 等它排完版再打印 —— 立刻 print 会打到空白页
+    setTimeout(() => {
+      try {
+        f.contentWindow.focus();
+        f.contentWindow.print();
+      } catch (e) { alert('打不开打印窗口：' + e); }
+    }, 500);
   }
 
   // ══════════════════ 设置面板 ══════════════════
@@ -443,7 +461,7 @@
       if (card && act === 'print') {
         const m = curConv().msgs[+card.dataset.mi];
         const rec = m && m.result && m.result.recommendations[+card.dataset.ri];
-        if (rec) savePrint(rec);
+        if (rec) savePdf(rec);
         return;
       }
       if (card && act === 'pick') {
@@ -473,7 +491,7 @@
       svg.style.width = svg.dataset.fit === '1' ? '1500px' : '100%';
       svg.dataset.fit = svg.dataset.fit === '1' ? '0' : '1';
     });
-    $('#vSave').addEventListener('click', () => viewerRec && savePrint(viewerRec));
+    $('#vSave').addEventListener('click', () => viewerRec && savePdf(viewerRec));
 
     $('#closeS').addEventListener('click', closeSetup);
     $('#pSel').addEventListener('change', () => {
