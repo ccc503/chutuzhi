@@ -1,0 +1,21 @@
+{
+  "name": "出图纸 —— 电气原理图助手",
+  "short_name": "出图纸",
+  "description": "说一句话或者点几下，出一张 A3 电气原理图。全在手机上算，不用联网，也不上传任何东西。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "id": "/chutuzhi/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#16171a",
+  "theme_color": "#16171a",
+  "categories": ["productivity", "utilities", "business"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
