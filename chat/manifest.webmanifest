@@ -1,0 +1,18 @@
+{
+  "name": "出图纸 · 聊天版",
+  "short_name": "出图纸",
+  "description": "一句话说你要什么电控柜，直接出电气原理图",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#141519",
+  "theme_color": "#141519",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
