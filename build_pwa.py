@@ -106,12 +106,14 @@ def main():
         print('  ⚠️ 没找到 node，跳过语法自检')
 
     # ⑤ sw.js 打版本号
-    ver = hashlib.sha256(out.encode('utf-8')).hexdigest()[:12]
+    # ⚠️ 版本号必须同时跟着【index.html】和【sw.js 的逻辑】走 ——
+    #    只跟着 index.html 的话，改了 sw.js 本身（比如加 cache:'reload'）版本号不变，
+    #    浏览器虽然会重装 SW，但缓存名没变，行为容易和预期错开
     sw = open(SW, encoding='utf-8').read()
-    # ⚠️ 只换 `const VER = PREFIX + '…'` 那一处 —— 以前用 chutuzhi-[0-9a-f_]+ 全量替换，
-    #    会连注释/前缀常量一起改，加了 PREFIX 之后必须收紧
+    salt = re.sub(r"const VER = PREFIX \+ '[^']*'", '', sw)
+    ver = hashlib.sha256((out + salt).encode('utf-8')).hexdigest()[:12]
     sw2 = re.sub(r"(const VER = PREFIX \+ ')[^']*(')", rf"\g<1>{ver}\g<2>", sw)
-    if sw2 == sw:
+    if sw2 == sw and ver not in sw:
         print('  ❌ sw.js 版本号没换成（源码里找不到 `const VER = PREFIX + \'…\'`）')
         return 1
     with open(SW, 'w', encoding='utf-8', newline='') as f:
