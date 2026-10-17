@@ -14,7 +14,7 @@
       必须 `caches.open(自己那个).match(...)`。
 */
 const PREFIX = 'chutuzhi-site-';
-const VER = PREFIX + '18ab4bb1237e';
+const VER = PREFIX + '51606d1017ca';
 
 const ASSETS = [
   './',
