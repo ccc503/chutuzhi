@@ -278,18 +278,96 @@
     }
   }
 
-  // ══════════════════ 对话列表 ══════════════════
-  function openList() {
-    const box = $('#listBody');
-    box.innerHTML = S.convs.map((c) => `
-      <div class="conv ${c.id === S.cur ? 'conv-on' : ''}" data-act="conv" data-id="${c.id}">
-        <div class="conv-t">${esc(c.title || '新对话')}</div>
-        <div class="conv-s">${c.msgs.length ? c.msgs.length + ' 条' : '空'}</div>
-        <button class="conv-del" data-act="delconv" data-id="${c.id}">删</button>
-      </div>`).join('');
-    $('#list').classList.add('on');
+  // ══════════════════ 左侧边栏 ══════════════════
+  // ⚠️ 2026-10-17 用户反馈「侧边栏没有了，跟之前不是一个样的」。
+  //    手机版第一版只做了个「所有对话」弹窗，把电脑版那个「这里能画什么」的侧栏整个丢了。
+  //    现在补回来：手机上从左滑出，大屏常驻；内容与 cad-agent/web/index.html 的 renderSide() 对齐。
+  const FSKEY = 'chutuzhi.fs';
+  let FS = 1;
+
+  function applyFs() {
+    document.body.classList.remove('fs-2', 'fs-3');
+    if (FS === 2) document.body.classList.add('fs-2');
+    if (FS === 3) document.body.classList.add('fs-3');
+    $$('.fsbtn').forEach((b) => b.classList.toggle('on', +b.dataset.fs === FS));
   }
-  function closeList() { $('#list').classList.remove('on'); }
+
+  function openSide() {
+    renderSide();
+    $('#side').classList.add('on');
+    $('#veil').classList.add('on');
+  }
+  function closeSide() {
+    $('#side').classList.remove('on');
+    $('#veil').classList.remove('on');
+  }
+
+  function convosNode() {
+    if (!S.convs.length) return '<div class="empty">还没有对话。<br>点下面「开个新对话」。</div>';
+    return '<div class="clist">' + S.convs.map((c) => {
+      const on = c.id === S.cur;
+      const nu = c.msgs.filter((m) => m.role === 'user').length;
+      const nf = c.msgs.filter((m) => m.role === 'ai').reduce(
+        (s, m) => s + (((m.result && m.result.recommendations) || [])
+          .filter((r) => r && (r.svg || r.kind)).length), 0);
+      return `<div class="citem${on ? ' on' : ''}" data-act="conv" data-id="${c.id}">
+        <span class="tx"><b>${esc(c.title || '新对话')}</b>
+        <small>${nu} 句 ｜ ${nf} 张图</small></span>
+        <button class="del" data-act="delconv" data-id="${c.id}" title="删掉">×</button></div>`;
+    }).join('') + '</div>';
+  }
+
+  const CATS = { EH: ['🔥', '加热'], M: ['⚙️', '电机 / 泵'], CTRL: ['🔔', '开关 / 定时 / 阀'] };
+  const ASKS = ['我要一个控制柜', '给冷库做个柜子', '有个大电机要启动', '饭店厨房排烟',
+    '水箱要加热', '做个星三角启动柜', '补水排水都要', '要能定时控制'];
+
+  function renderSide() {
+    const L = window.LIB || {};
+    let h = '';
+
+    // ① 我的对话 —— 放最前（他最常要的就是「接着刚才那个聊」）
+    h += `<div class="grp"><button class="ghd" data-act="grp">
+      <span class="ico">💬</span><span>我的对话</span><span class="arw">▾</span></button>
+      <div class="gbody">${convosNode()}
+      <button id="newConvBtn" data-act="newconv">+ 开个新对话</button></div></div>`;
+
+    // ② 整柜型
+    const cabs = L.CABINETS || [];
+    if (cabs.length) {
+      h += `<div class="grp"><button class="ghd" data-act="grp">
+        <span class="ico">🏭</span><span>整柜型（点一下出整柜）</span><span class="arw">▾</span></button>
+        <div class="gbody">` + cabs.map((c) => `
+        <button class="itm" data-act="cab" data-i="${esc(c.kind)}"><span class="ico">📐</span>
+          <span class="tx">${esc(c.name)}<small>${esc(c.one_line || '')}</small></span>
+          <span class="go">出图 ›</span></button>`).join('') + '</div></div>';
+    }
+
+    // ③ 回路 / 器件（按大类分）
+    const byCat = {};
+    for (const c of (L.CIRCUITS || [])) (byCat[c.cat] = byCat[c.cat] || []).push(c);
+    for (const cat of Object.keys(byCat)) {
+      const pair = CATS[cat] || ['📦', cat];
+      h += `<div class="grp"><button class="ghd" data-act="grp">
+        <span class="ico">${pair[0]}</span><span>${esc(pair[1])}</span><span class="arw">▾</span></button>
+        <div class="gbody">` + byCat[cat].map((c) => `
+        <button class="itm" data-act="cir" data-q="${esc(c.name)}"><span class="ico">🔹</span>
+          <span class="tx">${esc(c.name)}<small>${esc(c.label || '')}</small></span>
+          <span class="go">加进图 ›</span></button>`).join('') + '</div></div>';
+    }
+
+    // ④ 不知道咋说 —— 给现成问法
+    h += `<div class="grp"><button class="ghd" data-act="grp">
+      <span class="ico">💬</span><span>不知道咋说？照这些问</span><span class="arw">▾</span></button>
+      <div class="gbody">` + ASKS.map((q) => `
+      <button class="itm" data-act="say" data-q="${esc(q)}"><span class="ico">💬</span>
+        <span class="tx">${esc(q)}</span><span class="go">问 ›</span></button>`).join('') + '</div></div>';
+
+    // ⑤ 设置入口
+    h += `<button class="side-ft-btn" data-act="setup">⚙️ AI 接口设置</button>`;
+
+    $('#sideBody').innerHTML = h;
+    applyFs();
+  }
 
   // ══════════════════ 事件 ══════════════════
   function bind() {
@@ -313,13 +391,39 @@
       const t = e.target.closest('[data-act]');
       if (!t) return;
       const act = t.dataset.act;
-      if (act === 'say') { send(t.dataset.q); return; }
+      if (act === 'say') { closeSide(); send(t.dataset.q); return; }
       if (act === 'chip') { send(t.dataset.q); return; }
-      if (act === 'setup') { openSetup(); return; }
-      if (act === 'list') { openList(); return; }
-      if (act === 'newconv') { newConv(); closeList(); return; }
+      if (act === 'setup') { closeSide(); openSetup(); return; }
+      if (act === 'list') {
+        if ($('#side').classList.contains('on')) closeSide(); else openSide();
+        return;
+      }
+      if (act === 'closeside') { closeSide(); return; }
+      if (act === 'grp') {
+        const g = t.parentElement;
+        if (g) g.classList.toggle('close');
+        return;
+      }
+      if (act === 'newconv') { newConv(); renderSide(); renderAll(); closeSide(); return; }
+      if (act === 'cab') {
+        const c = (window.LIB.CABINETS || []).find((x) => x.kind === t.dataset.i);
+        closeSide();
+        if (c) send('我要做' + c.name);
+        return;
+      }
+      if (act === 'cir') {
+        closeSide();
+        send('我要一个电控柜，里面要有' + t.dataset.q);
+        return;
+      }
+      if (act === 'fs') {
+        FS = +t.dataset.fs || 1;
+        try { localStorage.setItem(FSKEY, String(FS)); } catch (e2) { /* 存不了就只在本次生效 */ }
+        applyFs();
+        return;
+      }
       if (act === 'conv') {
-        S.cur = t.dataset.id; save(); closeList(); renderAll(); return;
+        S.cur = t.dataset.id; save(); renderSide(); renderAll(); closeSide(); return;
       }
       if (act === 'delconv') {
         e.stopPropagation();
@@ -327,7 +431,7 @@
         S.convs = S.convs.filter((c) => c.id !== id);
         if (!S.convs.length) newConv(true);
         if (!S.convs.some((c) => c.id === S.cur)) S.cur = S.convs[0].id;
-        save(); closeList(); renderAll(); return;
+        save(); renderSide(); renderAll(); return;
       }
       const card = t.closest('.card');
       if (card && act === 'open') {
@@ -389,8 +493,6 @@
     $('#pClear').addEventListener('click', () => {
       window.LLM.clearCfg(); closeSetup(); renderAll();
     });
-    $('#closeL').addEventListener('click', closeList);
-    $('#newConvBtn').addEventListener('click', () => { newConv(); closeList(); });
   }
 
   function curMsgAt(card) {
@@ -403,8 +505,14 @@
   // ══════════════════ 启动 ══════════════════
   function boot() {
     load();
+    try {
+      const f = parseInt(localStorage.getItem(FSKEY) || '1', 10);
+      FS = (f === 2 || f === 3) ? f : 1;
+    } catch (e) { FS = 1; }
+    applyFs();
     bind();
     renderAll();
+    renderSide();          // 侧栏先渲染好（大屏上是常驻的）
     // 第一次用又没配接口 → 自动弹设置
     if (!window.LLM.getCfg()) setTimeout(openSetup, 700);
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
