@@ -35,7 +35,7 @@
     const kindFixed = !VALID_KINDS.has(kind);
     if (kindFixed) kind = 'tank';
 
-    const loads = [], seen = {};
+    const loads = [];
     for (const it of (r.loads || [])) {
       let cat, cn;
       if (Array.isArray(it) && it.length >= 2) { cat = String(it[0]).toUpperCase(); cn = _s(it[1]); }
@@ -43,10 +43,9 @@
       else if (typeof it === 'string') { cat = NAME2CAT[it] || 'M'; cn = it; }
       else continue;
       if (!(cat === 'EH' || cat === 'M') || !cn) continue;
-      // ⭐ 图上每路底下会自动加「1.」「2.」编号 —— 模型若自己带了「1.补水泵」就会变成「1.1.补水泵」
+      // ⭐ 图上每路底下本来就会加「1.」「2.」编号 → 名字里别再带编号，否则会出现「1.1.补水泵」
       cn = cn.replace(/^\s*\d+\s*[.、·:：]\s*/, '').trim() || cn;
-      seen[cn] = (seen[cn] || 0) + 1;
-      loads.push([cat, seen[cn] === 1 ? cn : `${cn}${seen[cn]}`]);
+      loads.push([cat, cn]);
     }
 
     const ctrls = [];
@@ -139,7 +138,8 @@
     for (const [label, n] of [['小规模', 2], ['中规模', 4], ['大规模', 8]]) {
       if (recs.length >= need) break;
       const loads = [];
-      for (let i = 0; i < n; i++) loads.push(['M', `水泵${i + 1}`]);
+      // 名字统一叫「水泵」——图上每路底下会用 1./2./3. 自动编号区分，名字里再带号就重复了
+      for (let i = 0; i < n; i++) loads.push(['M', '水泵']);
       recs.push(normRec({
         kind: 'tank', name: `${label}通用控制柜（${n} 路）`,
         why: '按最常见的做法先出一个规模，你看着改。',
