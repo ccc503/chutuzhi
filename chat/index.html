@@ -2,7 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<!-- ⚠️ 不能写 maximum-scale=1：那会【禁止双指放大】，老人看图纸必然要放大。
+     （离线版 2026-10-17 踩过同一个坑，WCAG 1.4.4 不允许禁缩放） -->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#141519">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -173,9 +175,105 @@ body{display:flex;flex-direction:column;height:100dvh}
 .conv-del{background:none;border:0;color:#8a5a56;font-size:12px;cursor:pointer;padding:4px}
 #newConvBtn{width:100%;background:var(--acc);border:0;color:#1a1213;font-weight:600;
   border-radius:11px;padding:13px;font-size:14.5px;cursor:pointer;margin:6px 0 0}
+/* ══════════ 左侧边栏 ══════════
+   ⚠️ 2026-10-17 用户反馈「侧边栏没有了，跟之前不是一个样的」——
+   手机版第一版把电脑版那个「这里能画什么」的侧栏整个丢了，只剩一个「所有对话」弹窗。
+   这里补回来：手机上从左边滑出来，大屏上常驻（跟电脑版一致）。 */
+#side{position:fixed;left:0;top:0;bottom:0;width:min(87vw,336px);z-index:60;
+  background:var(--bg2);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;transform:translateX(-102%);
+  transition:transform .22s ease-out;padding-top:var(--safe-t)}
+#side.on{transform:none;box-shadow:14px 0 40px #0008}
+#veil{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55;display:none}
+#veil.on{display:block}
+.shead{padding:13px 14px 11px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px}
+.shead h2{margin:0;font-size:16px;font-weight:600;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shead .x{background:none;border:0;color:var(--dim);font-size:22px;cursor:pointer;
+  width:36px;height:36px;border-radius:9px;font-family:inherit;line-height:1;padding:0}
+.shead .x:active{background:#2a2b32}
+.sbody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 10px 16px;
+  -webkit-overflow-scrolling:touch}
+.sfoot{border-top:1px solid var(--line);padding:9px 12px calc(9px + var(--safe-b));
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.sfoot .lb{font-size:12px;color:var(--dim2)}
+.fsbtn{background:var(--card);border:1px solid var(--line);color:var(--ink);
+  border-radius:9px;cursor:pointer;padding:7px 12px;font-size:13px;
+  font-family:inherit;min-height:38px}
+.fsbtn.on{background:var(--acc);color:#1a1213;border-color:var(--acc);font-weight:700}
+.grp{margin:6px 0}
+.ghd{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;
+  color:var(--ink);font:600 14.5px/1.4 inherit;font-family:inherit;
+  padding:11px 8px;border-radius:10px;cursor:pointer;text-align:left;min-height:46px}
+.ghd:active{background:#24252c}
+.ghd .ico{flex:0 0 auto;font-size:16px}
+.ghd .arw{margin-left:auto;color:var(--dim2);font-size:11px;transition:transform .15s}
+.grp.close .arw{transform:rotate(-90deg)}
+.grp.close .gbody{display:none}
+.gbody{padding:0 0 6px}
+.itm{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:11px;
+  color:var(--ink);font:14px/1.4 inherit;font-family:inherit;
+  padding:11px;margin:6px 0;cursor:pointer;min-height:52px}
+.itm:active{background:#2c2d35;border-color:var(--acc)}
+.itm .ico{flex:0 0 auto;font-size:15px}
+.itm .tx{flex:1;min-width:0}
+.itm .tx small{display:block;color:var(--dim2);font-size:11.5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.itm .go{flex:0 0 auto;color:var(--acc2);font-size:11.5px;opacity:.8}
+.clist{display:flex;flex-direction:column;gap:6px}
+.citem{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:11px;
+  background:var(--card);border:1px solid var(--line);cursor:pointer;min-height:56px}
+.citem.on{background:#241e1f;border-color:var(--acc)}
+.citem .tx{flex:1;min-width:0;overflow:hidden}
+.citem .tx b{display:block;font-size:14px;font-weight:500;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.citem .tx small{display:block;color:var(--dim2);font-size:11px}
+.citem .del{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:transparent;
+  border:1px solid transparent;color:var(--dim2);cursor:pointer;font-size:19px;
+  font-family:inherit;padding:0;line-height:1}
+.citem .del:active{background:#3a2c2c;color:#e08a8a}
+.empty{font-size:12.5px;color:var(--dim2);padding:8px 4px;line-height:1.7}
+#newConvBtn{width:100%;background:var(--acc);border:0;color:#1a1213;font-weight:600;
+  border-radius:11px;padding:13px;font-size:14.5px;cursor:pointer;margin:10px 0 0;
+  min-height:48px;font-family:inherit}
+.side-ft-btn{width:100%;background:var(--card);border:1px solid var(--line);color:var(--ink);
+  border-radius:11px;padding:12px;font-size:14px;cursor:pointer;margin:10px 0 0;
+  font-family:inherit;min-height:48px}
+.side-ft-btn:active{background:var(--card2)}
+
+/* 平板 / 电脑：侧栏常驻，跟电脑版一模一样 */
+@media(min-width:820px){
+  #side{transform:none;box-shadow:none;width:336px}
+  #veil{display:none!important}
+  body{padding-left:336px}
+  #hList{display:none}
+  .shead .x{display:none}   /* 常驻了就不需要关，避免误点以为关掉了 */
+}
+
+/* 字大小（侧栏底部）—— zoom 比改根字号可靠：这套 CSS 全是 px */
+body.fs-2 #msgs,body.fs-2 #ft{zoom:1.1}
+body.fs-3 #msgs,body.fs-3 #ft{zoom:1.22}
 </style>
 </head>
 <body>
+
+<!-- ══════════ 左侧边栏（跟电脑版同一套内容）══════════ -->
+<aside id="side">
+  <div class="shead">
+    <h2>🧰 这里能画什么</h2>
+    <button class="x" data-act="closeside" aria-label="关闭">×</button>
+  </div>
+  <div class="sbody" id="sideBody"></div>
+  <div class="sfoot">
+    <span class="lb">字大小</span>
+    <button class="fsbtn" data-act="fs" data-fs="1">小</button>
+    <button class="fsbtn" data-act="fs" data-fs="2">中</button>
+    <button class="fsbtn" data-act="fs" data-fs="3">大</button>
+  </div>
+</aside>
+<div id="veil" data-act="closeside"></div>
 
 <header id="hdr">
   <button id="hList" data-act="list" aria-label="对话列表">☰<span id="convCount"></span></button>
@@ -238,16 +336,7 @@ body{display:flex;flex-direction:column;height:100dvh}
   </div>
 </div>
 
-<!-- 对话列表 -->
-<div class="ov" id="list">
-  <div class="sheet">
-    <div class="sheet-hd"><h3>所有对话</h3><button id="closeL">关闭</button></div>
-    <div class="sheet-bd">
-      <div id="listBody"></div>
-      <button id="newConvBtn">+ 开个新对话</button>
-    </div>
-  </div>
-</div>
+<!-- 对话列表：已经并进左侧边栏了（2026-10-17），这个弹窗删掉 -->
 
 <script src="ref_draw.js"></script>
 <script src="data.js"></script>
