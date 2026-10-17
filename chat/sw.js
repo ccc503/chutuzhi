@@ -9,7 +9,7 @@
 // ② 绝不能用全局 `caches.match(req)` —— 它按缓存创建顺序在所有缓存里找，旧版本先命中 →
 //    文件更新了用户还拿几个月前的。必须 `caches.open(自己那个).match(...)`。
 const PREFIX = 'chutuzhi-chat-';
-const CACHE = PREFIX + 'v8';
+const CACHE = PREFIX + 'v9';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './ref_draw.js', './data.js', './cap_rules.js', './prompts.js',
