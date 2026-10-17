@@ -32,7 +32,10 @@ const LOOKUP = (req, opt) => caches.open(VER).then((c) => c.match(req, opt));
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(VER)
-      .then((c) => c.addAll(ASSETS))
+      // ⭐⭐ `cache: 'reload'` 必须加！GitHub Pages 给 index.html 带 `Cache-Control: max-age=600`，
+      //     不加的话 addAll 会直接吃【浏览器 HTTP 缓存里那份旧的】存进新缓存 →
+      //     版本号明明变了，用户拿到的还是旧的（2026-10-17 线上真踩）
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
       .catch(() => self.skipWaiting())
   );
